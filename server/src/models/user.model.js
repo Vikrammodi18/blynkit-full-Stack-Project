@@ -49,7 +49,7 @@ const userSchema = new Schema({
     ],
     shoppingCart:[{
         type: Schema.Types.ObjectId,
-        ref: "CartProduct"
+        ref: "Cart"
     }],
     orderHistory:[{
         type:Schema.Types.ObjectId,
