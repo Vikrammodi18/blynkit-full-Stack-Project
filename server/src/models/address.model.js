@@ -1,5 +1,5 @@
-import {mongoose,Schema} from 'mongoose'
-
+import mongoose from 'mongoose'
+const {Schema} = mongoose;
 const addressSchema  = newSchema({
     addressLine:{
         type:String,
