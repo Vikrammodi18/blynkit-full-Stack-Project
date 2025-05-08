@@ -82,7 +82,7 @@ const login = asyncHandler(async (req,res)=>{
         throw new ApiError(400,"contact to admin")
      }
      //checking password is correct or not
-     const isPasswordCorrect = await User.checkPassword(password)
+     const isPasswordCorrect = await checkRegistered.checkPassword(password)
      if(!isPasswordCorrect){ //password is incorrect then send error message
          throw new ApiError(403,"password is incorrect")
      }
