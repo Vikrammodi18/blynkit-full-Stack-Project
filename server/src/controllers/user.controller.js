@@ -5,6 +5,7 @@ import asyncHandler from '../utils/asyncHandler.js'
 import ApiError from '../utils/apiError.js'
 import sendEmail from '../utils/sendEmail.js'
 import verifyEmailTemplate from '../utils/emailTemplate/verifyEmailTemplate.js'
+import ApiResponse from '../utils/apiResponse.js'
 const registerUser = asyncHandler(async (req,res)=>{
 
     const {email,name,password} = req.body
