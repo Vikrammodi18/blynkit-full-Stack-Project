@@ -45,5 +45,29 @@ const registerUser = asyncHandler(async (req,res)=>{
     }
     
 })
+const verifyEmail = asyncHandler(async (req,res)=>{
 
-export {registerUser}
+    try {
+        
+        const {verifyCode} = req.body
+        const user = await User.findById(new mongoose.Types.ObjectId(verifyCode))
+        if(!user){
+            throw new ApiError(400,"invalid code")
+        }
+        const updateVerifyEmail = await User.findByIdAndUpdate(user?._id,{
+            $set:{
+                verifyEmail:true
+            }
+        },
+        {new :true})
+        return res
+        .status(200)
+        .json(new ApiResponse(200,updateVerifyEmail,"email verified successfully"))
+    } catch (error) {
+        return res.status(500)
+        .json(new ApiError(500,error.message))
+    }
+})
+export {registerUser,
+    verifyEmail
+}
