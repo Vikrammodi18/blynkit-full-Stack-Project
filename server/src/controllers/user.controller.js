@@ -68,6 +68,49 @@ const verifyEmail = asyncHandler(async (req,res)=>{
         .json(new ApiError(500,error.message))
     }
 })
+const login = asyncHandler(async (req,res)=>{
+   try {
+     const{email,password} = req.body
+     if([email,password].some((field)=> !field || field.trim()==="")){
+         throw new ApiError(400,"email and password are required!!")
+     }
+     const checkRegistered = await User.findOne({email})
+     if(! checkRegistered){
+         throw new ApiError(400,"user did not registered")
+     }
+     if(checkRegistered.status !== 'Active'){
+        throw new ApiError(400,"contact to admin")
+     }
+     //checking password is correct or not
+     const isPasswordCorrect = await User.checkPassword(password)
+     if(!isPasswordCorrect){ //password is incorrect then send error message
+         throw new ApiError(403,"password is incorrect")
+     }
+
+     const user = await User.findById(checkRegistered?._id)
+     const accessToken = await user.getAccessToken()
+     const refreshToken = await user.getRefreshToken()
+     user.refreshToken = refreshToken
+     await user.save()
+     const options ={
+         httpOnly: true,
+         secure : false,
+     }
+     return res
+     .status(200)
+     .cookie("accessToken",accessToken,options)
+     .cookie("refreshToken",refreshToken,options)
+     .json(
+         new ApiResponse(200,{loginData:user,
+             refreshToken,
+             accessToken
+         }, "user loggedIn successfully")
+     )
+   } catch (error) {
+    throw new ApiError(500,error.message)
+   }
+})
 export {registerUser,
-    verifyEmail
+    verifyEmail,
+    login
 }

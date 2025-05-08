@@ -1,6 +1,12 @@
+import dotenv from 'dotenv'
+dotenv.config()
 import mongoose from 'mongoose'
+
 import bcrypt from 'bcryptjs'
+import jwt from 'jsonwebtoken'
 const {Schema} = mongoose;
+
+
 const userSchema = new Schema({
     name:{
         type:String,
@@ -76,6 +82,31 @@ userSchema.pre("save",async function(next){
     this.password = await bcrypt.hash(this.password,10)
     next()
 })
+
+userSchema.methods.checkPassword = async function(password){
+    const response =await bcrypt.compare(password,this.password)
+    return response
+}
+userSchema.methods.getAccessToken = async function(){
+    return jwt.sign({
+        _id: this._id,
+        email : this.email,
+        name : this.name,
+        
+    },
+    process.env.ACCESS_TOKEN_SECRET,
+    {expiresIn:process.env.ACCESS_TOKEN_EXPIRY}
+)
+}
+userSchema.methods.getRefreshToken = async function(){
+    return jwt.sign({
+        _id: this._id,
+        email:this._email
+    },
+    process.env.REFRESH_TOKEN_SECRET,
+    {expiresIn:process.env.REFRESH_TOKEN_EXPIRY}
+)
+}
 const User = mongoose.model("User",userSchema)
 
 export default User
