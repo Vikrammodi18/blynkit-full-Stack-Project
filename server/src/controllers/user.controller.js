@@ -2,7 +2,7 @@ import dotenv from 'dotenv'
 dotenv.config()
 import User from '../models/user.model.js'
 import asyncHandler from '../utils/asyncHandler.js'
-import ApiError from '../utils/apiError.js'
+import ApiError from '../utils/ApiError.js'
 import sendEmail from '../utils/sendEmail.js'
 import verifyEmailTemplate from '../utils/emailTemplate/verifyEmailTemplate.js'
 import ApiResponse from '../utils/apiResponse.js'
@@ -87,7 +87,7 @@ const login = asyncHandler(async (req,res)=>{
          throw new ApiError(403,"password is incorrect")
      }
 
-     const user = await User.findById(checkRegistered?._id)
+     const user = await User.findById(checkRegistered?._id).select("_id name email")
      const accessToken = await user.getAccessToken()
      const refreshToken = await user.getRefreshToken()
      user.refreshToken = refreshToken
@@ -110,7 +110,34 @@ const login = asyncHandler(async (req,res)=>{
     throw new ApiError(500,error.message)
    }
 })
+const logout = asyncHandler(async (req,res)=>{
+    const userId = req?.user?._id
+    if(!userId){
+        throw new ApiError(400,"userId is required")
+    }
+    const user  = await User.findByIdAndUpdate(userId,{
+        $unset:{
+            refreshToken: null
+        }
+    },{new :true})
+
+    if(!user){
+        throw new ApiError(500,"refreshToken did not clear")
+    }
+    const options = {
+        httpOnly:true,
+        secure:false
+    }
+    return res
+    .status(200)
+    .clearCookie("accessToken",options)
+    .clearCookie("refreshToken",options)
+    .json(
+        new ApiResponse(200,{},"user logout successfully")
+    )
+})
 export {registerUser,
     verifyEmail,
-    login
+    login,
+    logout,
 }
