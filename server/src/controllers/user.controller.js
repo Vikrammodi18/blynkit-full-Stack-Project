@@ -7,6 +7,7 @@ import sendEmail from '../utils/sendEmail.js'
 import verifyEmailTemplate from '../utils/emailTemplate/verifyEmailTemplate.js'
 import ApiResponse from '../utils/apiResponse.js'
 import uploadImageOnCloudinary from '../utils/cloudinary.js'
+
 const registerUser = asyncHandler(async (req,res)=>{
 
     const {email,name,password} = req.body
@@ -163,9 +164,27 @@ const uploadAvatar = asyncHandler(async (req,res)=>{
         throw new ApiError(500,error.message || "something went wrong in upload avatar")
     }
 })
-export {registerUser,
+const updateUser = asyncHandler(async (req,res)=>{
+    const {name,mobile,email} = req.body
+    const userId = req.user?._id
+
+    const updateUser = await User.findByIdAndUpdate(userId,{
+        ...(name && {name}),
+        ...(mobile && {mobile}),
+        ...(email && {email}),
+        
+    },{new : true})
+    return res
+    .status(200)
+    .json(
+        new ApiResponse(200,updateUser,"user details update")
+    )
+})
+export {
+    registerUser,
     verifyEmail,
     login,
     logout,
     uploadAvatar,
+    updateUser,
 }

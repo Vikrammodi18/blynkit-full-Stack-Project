@@ -4,7 +4,8 @@ import {
     verifyEmail,
     login,
     logout,
-    uploadAvatar
+    uploadAvatar,
+    updateUser
  } from '../controllers/user.controller.js'
 import verifyJWT from '../middleware/auth.middleware.js'
 import upload from '../middleware/multer.middleware.js'
@@ -15,4 +16,5 @@ router.route("/verifyEmail").post(verifyEmail)
 router.route("/login").post(login)
 router.route("/logout").get(verifyJWT,logout)
 router.route("/uploadAvatar").post(verifyJWT,upload.single("avatar"),uploadAvatar)
+router.route("/updateUser").put(verifyJWT,updateUser)
 export default router
