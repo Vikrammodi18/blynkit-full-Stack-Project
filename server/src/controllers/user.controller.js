@@ -6,6 +6,7 @@ import ApiError from '../utils/ApiError.js'
 import sendEmail from '../utils/sendEmail.js'
 import verifyEmailTemplate from '../utils/emailTemplate/verifyEmailTemplate.js'
 import ApiResponse from '../utils/apiResponse.js'
+import uploadImageOnCloudinary from '../utils/cloudinary.js'
 const registerUser = asyncHandler(async (req,res)=>{
 
     const {email,name,password} = req.body
@@ -136,8 +137,35 @@ const logout = asyncHandler(async (req,res)=>{
         new ApiResponse(200,{},"user logout successfully")
     )
 })
+const uploadAvatar = asyncHandler(async (req,res)=>{
+    
+    try {
+        const image = req.file
+        if(!image){
+            throw new ApiError(400,"image is required")
+        }
+        const upload = await uploadImageOnCloudinary(image)
+        if(!upload){
+            throw new ApiError(500,"your image did not uploaded correctly")
+        }
+        const user = await User.findByIdAndUpdate(req.user._id,{
+            avatar : upload.url
+        },
+    {new:true})
+
+
+       return res
+       .status(200)
+       .json(
+        new ApiResponse(200,user,"avatar uploaded successfully")
+       )
+    } catch (error) {
+        throw new ApiError(500,error.message || "something went wrong in upload avatar")
+    }
+})
 export {registerUser,
     verifyEmail,
     login,
     logout,
+    uploadAvatar,
 }
