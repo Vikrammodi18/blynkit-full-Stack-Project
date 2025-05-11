@@ -7,7 +7,7 @@ import sendEmail from '../utils/sendEmail.js'
 import verifyEmailTemplate, { otpLoginTemplate } from '../utils/emailTemplate/verifyEmailTemplate.js'
 import ApiResponse from '../utils/apiResponse.js'
 import uploadImageOnCloudinary from '../utils/cloudinary.js'
-
+import JWT from 'jsonwebtoken'
 const registerUser = asyncHandler(async (req,res)=>{
 
     const {email,name,password} = req.body
@@ -259,6 +259,33 @@ const resetPassword = asyncHandler(async(req,res)=>{
     )
 
 })
+const refreshAccessToken = asyncHandler(async(req,res)=>{
+    const refreshToken = req.cookies?.refreshToken
+
+    const decode = await JWT.verify(refreshToken,process.env.REFRESH_TOKEN_SECRET)
+    const user = await User.findById(decode._id)
+    if(!user){
+        throw new ApiError(400,"user not found")
+
+    }
+    const accessToken = await user.getAccessToken()
+    const newRefreshToken = await user.getRefreshToken()
+    user.refreshToken = newRefreshToken
+    await user.save()
+    const options = {
+        httpOnly:true,
+        secure:false
+    }
+    return res
+    .status(200)
+    .cookie("accessToken",accessToken,options)
+    .cookie("refreshToken",newRefreshToken,options)
+    .json(
+        new ApiResponse(200,{refreshToken:newRefreshToken,
+            accessToken
+        },"refreshed accessToken")
+    )
+})
 export {
     registerUser,
     verifyEmail,
@@ -268,5 +295,6 @@ export {
     updateUser,
     forgotPassword,
     verifyOTP,
-    resetPassword
+    resetPassword,
+    refreshAccessToken
 }
