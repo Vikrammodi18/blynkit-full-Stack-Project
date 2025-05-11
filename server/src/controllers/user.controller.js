@@ -4,7 +4,7 @@ import User from '../models/user.model.js'
 import asyncHandler from '../utils/asyncHandler.js'
 import ApiError from '../utils/ApiError.js'
 import sendEmail from '../utils/sendEmail.js'
-import verifyEmailTemplate from '../utils/emailTemplate/verifyEmailTemplate.js'
+import verifyEmailTemplate, { otpLoginTemplate } from '../utils/emailTemplate/verifyEmailTemplate.js'
 import ApiResponse from '../utils/apiResponse.js'
 import uploadImageOnCloudinary from '../utils/cloudinary.js'
 
@@ -180,6 +180,85 @@ const updateUser = asyncHandler(async (req,res)=>{
         new ApiResponse(200,updateUser,"user details update")
     )
 })
+//forgot password user not logged in
+const forgotPassword = asyncHandler(async(req,res)=>{
+    const {email} = req.body
+    if(!email || email.trim() === ""){
+        throw new ApiError(402,"email required")
+    }
+    const user = await User.findOne({email})
+    if(! user){
+        throw new ApiError(400,"user not registered")
+    }
+
+    let number = [1,2,3,4,5,6,7,8,9,0]
+    let otp = ""
+    for(let i=0;i<6;i++){
+        otp += number[Math.floor((Math.random()*10))]
+    }
+    const otpExpiryDate  = new Date() + 1000*60*10
+    const subject = "OTP(one time password) to create new password"
+    const setOTP = await User.findOneAndUpdate({email},{
+        forgotPasswordOTP:otp,
+        forgotPasswordExpiry: new Date(otpExpiryDate).toISOString() 
+    })
+    sendEmail({sendTo:email,subject,html:otpLoginTemplate({otp})})
+    
+    return res
+    .status(200)
+    .json(
+        new ApiResponse(200,{},"otp is sent to you registered email")
+    )
+
+})
+const verifyOTP = asyncHandler(async (req,res)=>{
+    const {email,otp} = req.body
+    // const userId = req.user?._id
+    // console.log(userId)
+    const user = await User.findOne({email})
+    
+    console.log(user.forgotPasswordExpiry) 
+    if( user.forgotPasswordExpiry >= new Date().toISOString){
+        throw new ApiError(400,"otp has expired")
+    }
+    if(! user.forgotPasswordOTP === otp){
+        throw new ApiError(400,"wrong otp")
+    }
+    await User.findByIdAndUpdate(user._id,{
+        forgotPasswordOTP: null,
+        forgotPasswordExpiry:null,
+    })
+    return res
+    .status(200)
+    .json(
+        new ApiResponse(200,{},"otp is correct")
+    )
+
+})
+const resetPassword = asyncHandler(async(req,res)=>{
+    const {email, password, confirmPassword} = req.body
+    if(!email || email.trim()=== ""){
+        throw new ApiError(400,"email is required")
+    }
+    if([password, confirmPassword].some((field)=> !field || field.trim()==="")){
+        throw new ApiError(400,"password fields are requiredd")
+    }
+    const user = await User.findOne({email})
+    if(!user){
+        throw new ApiError(400,"user is not registered")
+    }
+    if(password !== confirmPassword){
+        throw new ApiError(402,"password and confirm password must be same")
+    }
+    user.password = confirmPassword
+    await user.save()
+    return res
+    .status(200)
+    .json(
+        new ApiResponse(200,{},"Password reset successfully")
+    )
+
+})
 export {
     registerUser,
     verifyEmail,
@@ -187,4 +266,7 @@ export {
     logout,
     uploadAvatar,
     updateUser,
+    forgotPassword,
+    verifyOTP,
+    resetPassword
 }
