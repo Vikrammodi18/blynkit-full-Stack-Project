@@ -261,11 +261,13 @@ const resetPassword = asyncHandler(async(req,res)=>{
 })
 const refreshAccessToken = asyncHandler(async(req,res)=>{
     const refreshToken = req.cookies?.refreshToken
-
+    if(!refreshToken){
+        throw new ApiError(400,"refreshToken required")
+    }
     const decode = await JWT.verify(refreshToken,process.env.REFRESH_TOKEN_SECRET)
     const user = await User.findById(decode._id)
     if(!user){
-        throw new ApiError(400,"user not found")
+        throw new ApiError(400,"user not found or token expired")
 
     }
     const accessToken = await user.getAccessToken()

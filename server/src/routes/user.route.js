@@ -8,7 +8,8 @@ import {
     updateUser,
     forgotPassword,
     verifyOTP,
-    resetPassword
+    resetPassword,
+    refreshAccessToken
  } from '../controllers/user.controller.js'
 import verifyJWT from '../middleware/auth.middleware.js'
 import upload from '../middleware/multer.middleware.js'
@@ -23,4 +24,5 @@ router.route("/updateUser").put(verifyJWT,updateUser)
 router.route("/forgotPassword").put(forgotPassword)
 router.route("/verifyOTP").put(verifyOTP)
 router.route("/resetPassword").put(resetPassword)
+router.route("/refreshAccessToken").get(refreshAccessToken)
 export default router
