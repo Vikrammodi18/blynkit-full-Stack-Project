@@ -8,7 +8,6 @@ const productSchema = new Schema({
     },
     image:{
         type:Array,
-        type:String,
     },
     category:[{
         type: Schema.Types.ObjectId,
@@ -47,7 +46,7 @@ const productSchema = new Schema({
 
     },
     publish:{
-        type:boolean,
+        type:Boolean,
     }
 },{timestamps:true})
 
